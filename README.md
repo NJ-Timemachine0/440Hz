@@ -29,10 +29,10 @@ Mars without exception. Original twelve placements are preserved. There remain o
 incidence are unchanged. Band ratios are unchanged except explicit per-song exclusions.
 
 All real excerpts are six seconds (old seven-second excerpts were shortened by one second)
-to keep the time target. The rules-based Monte Carlo model (5,000 runs per case, same
+to keep clips short. After the v2 reference-flow change below, the rules-based Monte Carlo model (5,000 runs per case, same
 80–85% accuracy, 2sec thought + 2sec feedback, 25sec rehearsal per entry, 10sec game-over
-pause) estimates **11.33–14.42 min** across the three difficulties. This is a timing model,
-not measured player accuracy or a promise that difficulty is perceptually identical.
+pause) estimates **7.54–9.53 min** across the three difficulties. This is a timing model,
+not measured player accuracy or a promise that difficulty is perceptually identical. No difficulty values were changed to artificially lengthen games. The older 10–15 minute estimate assumed a reference on every round and no longer applies.
 See `tests/duration_model.json`.
 
 ## Recordings, sources, credits
@@ -135,5 +135,38 @@ recording songs have short approximate synthesized fallback motifs, not new reco
 A fresh title-screen continue starts timing at that checkpoint; a same-session retry
 accumulates time/mistakes/restarts. Real Android/headphone listening is still unverified.
 
-Final result: **145 passed / 0 failed** (139 core + 6 supplemental), zero JavaScript console/page errors. One deliberate missing-file HTTP404 resource diagnostic was expected.
-Exhaustive audio checks: 216 selectable muffle windows, HF drop 6.030–9.954dB; 276 timing windows, maximum copied-tail error 2.98e-08; 1104 pitch cases, maximum crossfade boundary delta 3.34e-06.
+## v2: reference playback change (2026-11-08 JST)
+
+The request “毎回お手本再生しなくていいです。” supersedes spec §2-2's reference →
+1-second gap → test on every question. Design/colors/typography and the answer layout
+are retained; the existing reference button is now small and stays in the same game-row
+position across rounds, labeled **お手本もう一度 / Replay reference**.
+
+- Automatic reference: once when entering a different song, including the first stage.
+  The stage rehearsal supplies this one reference. Its first round does NOT repeat it.
+  Same-song rounds automatically play **only the test**, once. A same-song checkpoint
+  retry remembers that its reference was heard; a fresh game starts a new reference cycle.
+- Optional reference: unlimited, clean replay of the current song, no Hz/life/mistake/retry
+  change. The current question and its test remain unchanged; no extra test is played.
+  All time spent in this optional replay is excluded from the result/best-time clock;
+  no extra timer penalty is added. Automatic stage rehearsal time remains normal time.
+- Available in ready rehearsal or answer-selection phases; disabled during loading,
+  any audio playback, gaps, feedback and interruptions. Busy presses are ignored, not
+  queued. Both answer buttons are disabled while replaying, then restored for the SAME
+  question. These phase-only rules never inspect whether an anomaly is present.
+- Reference-button DOM, style, position, planned timing and enable/disable rules are
+  identical for normal/anomaly rounds. Normal and anomalous rounds precompute the same
+  common audio profiles. The button itself never reveals an answer.
+- Interrupted test: repeat the test, not an already-heard automatic reference. An
+  interrupted initial reference is completed again before marking the song as heard.
+  Interrupted optional replay resumes cleanly and restores visible answer buttons;
+  its excluded-time accounting remains active until completion.
+
+Regression: `node tests/reference_flow.js` covers automatic reference cadence, test-only
+same-song rounds, penalty-free replay, score/question preservation, disabled busy presses,
+DOM/computed-style/position equality, identical planned timing, both language labels,
+new-stage transitions and interruption recovery. `shots/reference_replay_360.png` shows
+optional replay; the normal first/gameplay/result/credit screenshots are refreshed too.
+The full core and supplemental suites still cover the 17-song audio and game rules.
+
+Final v2 verification: **166 passed / 0 failed** (core 139, supplemental 6, reference-flow 21), zero JS console/page errors. 680,000 generated rounds. One deliberate missing-file HTTP404 resource diagnostic was expected; it is not a JavaScript error.
